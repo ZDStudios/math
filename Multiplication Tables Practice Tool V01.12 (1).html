@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Times Table Tester Pro</title>
+    <style>
+        /* --- General Styles & Fonts --- */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+        :root {
+            --primary-color: #0052D4;
+            --secondary-color: #65C7F7;
+            --accent-color: #9CECFB;
+            --success-color: #2ecc71;
+            --success-bg: rgba(46, 204, 113, 0.1);
+            --error-color: #e74c3c;
+            --error-bg: rgba(231, 76, 60, 0.1);
+            --light-color: #ffffff;
+            --dark-color: #2c3e50;
+            --neutral-color: #bdc3c7;
+            --neutral-bg: #ecf0f1;
+            --tile-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { font-size: 16px; }
+        body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color), var(--accent-color)); color: var(--dark-color); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px 0; }
+        .container { background: var(--light-color); border-radius: 20px; box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2); padding: 30px; width: 95%; max-width: 650px; overflow: hidden; }
+        h1, h2 { color: var(--dark-color); margin-bottom: 25px; text-align: center; }
+        .btn { background: linear-gradient(135deg, var(--secondary-color), var(--primary-color)); color: var(--light-color); border: none; border-radius: 12px; padding: 15px 20px; font-size: 1rem; font-weight: 600; cursor: pointer; width: 100%; transition: all 0.3s ease; box-shadow: 0 5px 15px rgba(0, 82, 212, 0.3); text-transform: uppercase; letter-spacing: 1px; margin-top: 10px; }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0, 82, 212, 0.4); }
+        .btn:disabled,
+        .btn:disabled:hover {
+            background: linear-gradient(135deg, #e0e2e4, #c8cdcf);
+            color: #8d9499;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .btn.secondary { background: var(--neutral-color); box-shadow: 0 5px 15px rgba(0,0,0,0.1); color: var(--dark-color); }
+        .btn.secondary:hover { background: #b0b9bf; box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
+        .hidden { display: none; }
+
+        /* --- Setup Screen --- */
+        #setup-screen h1 { font-size: 2.5rem; }
+        .form-group { margin-bottom: 25px; text-align: left; }
+        .form-group label { display: block; margin-bottom: 10px; font-weight: 600; font-size: 1.1rem; }
+        #times-table-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 10px; margin-bottom: 25px; }
+        .table-option { background-color: var(--neutral-bg); border: 2px solid var(--neutral-color); border-radius: 10px; padding: 10px; font-weight: 600; cursor: pointer; text-align: center; transition: all 0.2s ease; user-select: none; }
+        .table-option.special { grid-column: span 2; }
+        .table-option:hover { transform: scale(1.05); border-color: var(--secondary-color); }
+        .table-option.selected { background-color: var(--primary-color); color: var(--light-color); border-color: var(--primary-color); transform: scale(1.1); }
+
+        /* --- Test Screen --- */
+        #question-tile { background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: var(--light-color); padding: 30px 20px; border-radius: 15px; margin-bottom: 20px; box-shadow: var(--tile-shadow); transition: transform 0.1s; }
+        #question-text { font-size: 3.5rem; font-weight: 700; }
+        #question-text.countdown { color: var(--error-color); }
+        #progress-text { margin-bottom: 15px; font-size: 1rem; font-weight: 600; }
+        #answer-input-display { width: 100%; min-height: 80px; padding: 15px; font-size: 2.5rem; text-align: center; border-radius: 8px; border: 2px solid var(--primary-color); margin-bottom: 20px; display: flex; align-items: center; justify-content: center; color: var(--dark-color); }
+        #answer-input-display::after { content: '|'; animation: blink 1s step-end infinite; opacity: 0.5; }
+        @keyframes blink { 50% { opacity: 1; } }
+        #timer-container { width: 100%; background-color: var(--neutral-color); border-radius: 5px; height: 10px; margin-bottom: 20px; }
+        #timer-bar { height: 100%; width: 100%; background-color: var(--success-color); border-radius: 5px; transition: width 0.1s linear; }
+        #keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .keypad-btn { background-color: var(--neutral-bg); border: none; border-radius: 10px; padding: 20px; font-size: 1.8rem; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
+        .keypad-btn:hover { background-color: var(--neutral-color); }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); } 20%, 40%, 60%, 80% { transform: translateX(10px); } }
+        .shake { animation: shake 0.5s; }
+        
+        /* --- Results & Log Screens --- */
+        .results-footer { display: flex; flex-wrap: wrap; gap: 15px; }
+        #performance-dials { display: flex; justify-content: space-around; margin-bottom: 30px; gap: 15px; flex-wrap: wrap; }
+        .dial { --dial-size: 120px; --dial-border: 12px; --dial-color: var(--primary-color); width: var(--dial-size); height: var(--dial-size); border-radius: 50%; display: grid; place-items: center; position: relative; background: conic-gradient(var(--dial-color) calc(var(--value, 0) * 1%), var(--neutral-bg) 0); }
+        .dial::before { content: ''; position: absolute; width: calc(var(--dial-size) - var(--dial-border) * 2); height: calc(var(--dial-size) - var(--dial-border) * 2); background: var(--light-color); border-radius: 50%; }
+        .dial-value { position: relative; font-size: 1.8rem; font-weight: 700; }
+        .dial-value::after { content: '%'; font-size: 1rem; font-weight: 600; }
+        .dial-label { position: absolute; bottom: -25px; font-size: 0.9rem; font-weight: 600; }
+
+        #results-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; margin-top: 20px; margin-bottom: 30px; }
+        .result-cell { font-size: 0.7rem; font-weight: 600; padding: 5px 2px; border-radius: 4px; text-align: center; background-color: var(--neutral-bg); color: #7f8c8d; min-width: 30px; line-height: 1.3; }
+        .result-cell.correct { background-color: var(--success-bg); color: var(--success-color); }
+        .result-cell.incorrect { background-color: var(--error-bg); color: var(--error-color); }
+        .result-cell span { font-size: 0.6rem; display: block; }
+        
+        .table-container { width: 100%; overflow-x: auto; margin-bottom: 20px; }
+        .log-table { width: 100%; border-collapse: collapse; }
+        .log-table th, .log-table td { padding: 10px; border: 1px solid var(--neutral-color); text-align: center; white-space: nowrap;}
+        .log-table th { background-color: var(--neutral-bg); font-weight: 600; }
+        .log-table td { font-size: 0.9rem; }
+
+        /* --- Media Queries --- */
+        @media (max-width: 650px) {
+            .container { padding: 20px; max-width: 95%; }
+            #question-text { font-size: 3rem; }
+            .keypad-btn { padding: 15px; font-size: 1.5rem; }
+            .result-cell { font-size: 0.5rem; }
+            .dial { --dial-size: 90px; --dial-border: 10px; }
+            .dial-value { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="setup-screen">
+            <h1>Times Table Pro 🚀</h1>
+            <div class="form-group">
+                <label>Choose your challenge(s):</label>
+                <div id="times-table-grid"></div>
+            </div>
+            <button id="start-btn" class="btn">Start Test</button>
+        </div>
+
+        <div id="test-screen" class="hidden">
+            <div id="progress-text"></div>
+            <div id="question-tile"><p id="question-text"></p></div>
+            <div id="answer-input-display"></div>
+            <div id="timer-container"><div id="timer-bar"></div></div>
+            <div id="keypad"></div>
+        </div>
+        
+        <div id="results-screen" class="hidden">
+            <h2>Test Report</h2>
+            <div id="performance-dials">
+                <div class="dial" id="accuracy-dial" style="--dial-color: var(--success-color);"><div class="dial-value" id="accuracy-value"></div><div class="dial-label">Accuracy</div></div>
+                <div class="dial" id="speed-dial" style="--dial-color: #f39c12;"><div class="dial-value" id="speed-value"></div><div class="dial-label">Speed</div></div>
+                <div class="dial" id="rank-dial" style="--dial-color: var(--primary-color);"><div class="dial-value" id="rank-value"></div><div class="dial-label">Rank</div></div>
+            </div>
+            <div id="results-grid"></div>
+            <div class="results-footer">
+                <button id="best-results-btn" class="btn secondary">Personal Bests</button>
+                <button id="log-btn" class="btn secondary">View Log</button>
+                <button id="play-again-btn" class="btn">Play Again</button>
+            </div>
+        </div>
+
+        <div id="log-screen" class="hidden">
+            <h2>Test Log</h2>
+            <div class="table-container" id="log-table-container"></div>
+            <button id="back-to-report-btn" class="btn">Back to Report</button>
+        </div>
+
+        <div id="best-results-screen" class="hidden">
+            <h2>Personal Bests</h2>
+            <div class="table-container" id="best-results-table-container"></div>
+            <button id="best-back-to-report-btn" class="btn">Back to Report</button>
+        </div>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const allScreens = document.querySelectorAll('.container > div');
+        const setupScreen = document.getElementById('setup-screen');
+        const testScreen = document.getElementById('test-screen');
+        const resultsScreen = document.getElementById('results-screen');
+        const logScreen = document.getElementById('log-screen');
+        const bestResultsScreen = document.getElementById('best-results-screen');
+        const startBtn = document.getElementById('start-btn');
+        const playAgainBtn = document.getElementById('play-again-btn');
+        const logBtn = document.getElementById('log-btn');
+        const backToReportBtn = document.getElementById('back-to-report-btn');
+        const bestResultsBtn = document.getElementById('best-results-btn');
+        const bestBackToReportBtn = document.getElementById('best-back-to-report-btn');
+        const timesTableGrid = document.getElementById('times-table-grid');
+        const questionText = document.getElementById('question-text');
+        const answerInputDisplay = document.getElementById('answer-input-display');
+        const keypad = document.getElementById('keypad');
+        const resultsGrid = document.getElementById('results-grid');
+        const logTableContainer = document.getElementById('log-table-container');
+        const bestResultsTableContainer = document.getElementById('best-results-table-container');
+        const accuracyDial = document.getElementById('accuracy-dial');
+        const accuracyValue = document.getElementById('accuracy-value');
+        const speedDial = document.getElementById('speed-dial');
+        const speedValue = document.getElementById('speed-value');
+        const rankDial = document.getElementById('rank-dial');
+        const rankValue = document.getElementById('rank-value');
+
+        // --- Game State & Constants ---
+        let questions = [];
+        let resultsLog = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let currentAnswer = '';
+        let selectedTables = []; // Start with no tables selected
+        let startTime = 0;
+        const TIME_LIMIT = 10;
+        let timerInterval = null;
+        let isFirstAttempt = true;
+        const SECRET_SALT = "TimesTableKing2025";
+        
+        // --- Core Functions ---
+        
+        function initialize() {
+            createTableSelection();
+            createKeypad();
+            addEventListeners();
+            updateStartButtonState(); // Set initial button state
+        }
+        
+        function addEventListeners() {
+            startBtn.addEventListener('click', startGame);
+            playAgainBtn.addEventListener('click', () => {
+                showScreen(setupScreen);
+                selectedTables = []; // Reset selections for a new game
+                updateTableSelectionUI();
+                updateStartButtonState();
+            });
+            logBtn.addEventListener('click', () => showScreen(logScreen));
+            backToReportBtn.addEventListener('click', () => showScreen(resultsScreen));
+            bestResultsBtn.addEventListener('click', () => showScreen(bestResultsScreen));
+            bestBackToReportBtn.addEventListener('click', () => showScreen(resultsScreen));
+            keypad.addEventListener('click', handleKeypadInput);
+            document.addEventListener('keydown', handleHardwareKeyPress);
+        }
+
+        function showScreen(screenToShow) {
+            allScreens.forEach(screen => screen.classList.add('hidden'));
+            if (screenToShow === logScreen) displayLogTable();
+            if (screenToShow === bestResultsScreen) displayBestResults();
+            screenToShow.classList.remove('hidden');
+        }
+
+        function startGame() {
+            if (selectedTables.length === 0) return; // Safeguard
+            
+            score = 0;
+            currentQuestionIndex = 0;
+            resultsLog = [];
+            // startTime is now set after the countdown
+            generateQuestions(selectedTables);
+            showScreen(testScreen);
+
+            // Setup screen for countdown
+            questionText.textContent = '';
+            document.getElementById('progress-text').textContent = `Question 1 of ${questions.length}`;
+            
+            startCountdown();
+        }
+
+        function startCountdown() {
+            let count = 3;
+            questionText.classList.add('countdown');
+            
+            const countdownAction = () => {
+                if(count > 0) {
+                    questionText.textContent = count;
+                    count--;
+                    setTimeout(countdownAction, 1000);
+                } else {
+                    questionText.classList.remove('countdown');
+                    
+                    startTime = Date.now(); // Start the timer for the test
+                    displayNextQuestion();
+                }
+            }
+            countdownAction();
+        }
+
+        function displayNextQuestion() {
+            if (currentQuestionIndex >= questions.length) {
+                showResults();
+                return;
+            }
+            isFirstAttempt = true;
+            document.getElementById('question-tile').classList.remove('shake');
+            const question = questions[currentQuestionIndex];
+            questionText.textContent = `${question.a} × ${question.b}`;
+            document.getElementById('progress-text').textContent = `Question ${currentQuestionIndex + 1} of ${questions.length}`;
+            clearAnswer();
+            keypad.focus();
+            startTimer();
+        }
+
+        function showResults() {
+            const endTime = Date.now();
+            const totalTimeInSeconds = (endTime - startTime) / 1000;
+            
+            const accuracy = Math.round((score / resultsLog.length) * 100) || 0;
+            const aveTimePerQuestion = totalTimeInSeconds / questions.length;
+            let speed = 100 - 25 * (aveTimePerQuestion - 1.0);
+            speed = Math.round(Math.max(0, Math.min(100, speed)));
+            const rank = Math.round((accuracy + speed) / 2);
+            
+            let challengeName;
+            if (selectedTables.length === 1 && selectedTables[0] === 0) {
+                challengeName = 'All';
+            } else {
+                challengeName = selectedTables.sort((a, b) => a - b).join(', ') + 's';
+            }
+
+            const logEntry = {
+                timestamp: new Date().toISOString(),
+                challenge: challengeName,
+                accuracy,
+                time: totalTimeInSeconds.toFixed(1),
+                speed,
+                rank
+            };
+            logEntry.checksum = createChecksum(logEntry);
+            saveLogEntry(logEntry);
+
+            updateDial(accuracyDial, accuracyValue, accuracy);
+            updateDial(speedDial, speedValue, speed);
+            updateDial(rankDial, rankValue, rank);
+
+            populateResultsGrid();
+            showScreen(resultsScreen);
+        }
+
+        // --- Event Handlers & Input ---
+        function handleKeypadInput(e) {
+            const key = e.target.dataset.key;
+            if (!key || testScreen.classList.contains('hidden')) return;
+            if (key >= '0' && key <= '9') updateAnswer(key);
+            else if (key === '⌫') updateAnswer(null, true);
+            else if (key === 'Go') checkAnswer();
+        }
+        function handleHardwareKeyPress(e) {
+            if (testScreen.classList.contains('hidden')) return;
+            if (e.key >= '0' && e.key <= '9') updateAnswer(e.key);
+            else if (e.key === 'Backspace') updateAnswer(null, true);
+            else if (e.key === 'Enter') checkAnswer();
+        }
+        function updateAnswer(char, isBackspace = false) {
+            if (isBackspace) currentAnswer = currentAnswer.slice(0, -1);
+            else if (currentAnswer.length < 4) currentAnswer += char;
+            answerInputDisplay.textContent = currentAnswer;
+        }
+        function clearAnswer() {
+            currentAnswer = '';
+            answerInputDisplay.textContent = '';
+        }
+
+        // --- Question & Answer Logic ---
+        function generateQuestions(tablesArray) {
+            questions = [];
+            if (tablesArray.length === 1 && tablesArray[0] === 0) { // ALL selected
+                for (let i = 1; i <= 12; i++) for (let j = 1; j <= 12; j++) questions.push({ a: i, b: j });
+            } else { // One or more specific tables selected
+                tablesArray.forEach(table => {
+                    for (let i = 1; i <= 12; i++) {
+                        questions.push({ a: i, b: table });
+                    }
+                });
+            }
+            shuffleArray(questions);
+        }
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+        function checkAnswer() {
+            if (currentAnswer === '') return;
+            clearInterval(timerInterval);
+            const userAnswer = parseInt(currentAnswer);
+            const currentQuestion = questions[currentQuestionIndex];
+            const correctAnswer = currentQuestion.a * currentQuestion.b;
+            const isCorrect = userAnswer === correctAnswer;
+            resultsLog.push({ question: currentQuestion, userAnswer, correctAnswer, isCorrect });
+            if (isCorrect) {
+                score++;
+                currentQuestionIndex++;
+                displayNextQuestion();
+            } else {
+                handleIncorrectAnswer();
+            }
+        }
+        function handleIncorrectAnswer() {
+            if (isFirstAttempt) {
+                isFirstAttempt = false;
+                document.getElementById('question-tile').classList.add('shake');
+                clearAnswer();
+                setTimeout(() => document.getElementById('question-tile').classList.remove('shake'), 500);
+                startTimer();
+            } else {
+                currentQuestionIndex++;
+                displayNextQuestion();
+            }
+        }
+        function startTimer() {
+            clearInterval(timerInterval);
+            const timerBar = document.getElementById('timer-bar');
+            timerBar.style.transition = 'none';
+            timerBar.style.width = '100%';
+            setTimeout(() => {
+                timerBar.style.transition = `width ${TIME_LIMIT}s linear`;
+                timerBar.style.width = '0%';
+            }, 50);
+            timerInterval = setInterval(() => {
+                clearInterval(timerInterval);
+                handleTimeout();
+            }, TIME_LIMIT * 1000);
+        }
+        function handleTimeout() {
+            const currentQuestion = questions[currentQuestionIndex];
+            resultsLog.push({ question: currentQuestion, userAnswer: null, correctAnswer: currentQuestion.a * currentQuestion.b, isCorrect: false });
+            currentQuestionIndex++;
+            displayNextQuestion();
+        }
+
+        // --- UI Generation & Display ---
+        function updateStartButtonState() {
+            startBtn.disabled = selectedTables.length === 0;
+        }
+
+        function createTableSelection() {
+            timesTableGrid.innerHTML = ''; // Clear previous
+            for (let i = 1; i <= 12; i++) {
+                const option = document.createElement('div');
+                option.classList.add('table-option');
+                option.textContent = i;
+                option.dataset.value = i;
+                if (selectedTables.includes(i)) option.classList.add('selected');
+                timesTableGrid.appendChild(option);
+            }
+            const allOption = document.createElement('div');
+            allOption.classList.add('table-option', 'special');
+            allOption.textContent = 'All';
+            allOption.dataset.value = 0;
+            if (selectedTables.includes(0)) allOption.classList.add('selected');
+            timesTableGrid.appendChild(allOption);
+            
+            timesTableGrid.addEventListener('click', (e) => {
+                const clickedEl = e.target;
+                if (!clickedEl.classList.contains('table-option')) return;
+
+                const value = parseInt(clickedEl.dataset.value);
+
+                if (value === 0) { // 'All' was clicked
+                    // If 'All' is already selected, deselect it. Otherwise, select it.
+                    selectedTables = selectedTables.includes(0) ? [] : [0];
+                } else {
+                    // If 'All' was previously selected, deselect it
+                    selectedTables = selectedTables.filter(t => t !== 0);
+                    const index = selectedTables.indexOf(value);
+                    if (index > -1) {
+                        // Deselect if already selected
+                        selectedTables.splice(index, 1);
+                    } else {
+                        // Select it
+                        selectedTables.push(value);
+                    }
+                }
+                updateTableSelectionUI();
+                updateStartButtonState(); // Update button after every selection change
+            });
+        }
+        
+        function updateTableSelectionUI() {
+            const options = document.querySelectorAll('.table-option');
+            options.forEach(opt => {
+                const val = parseInt(opt.dataset.value);
+                if (selectedTables.includes(val)) {
+                    opt.classList.add('selected');
+                } else {
+                    opt.classList.remove('selected');
+                }
+            });
+        }
+
+        function createKeypad() {
+            keypad.innerHTML = '';
+            const keys = [7, 8, 9, 4, 5, 6, 1, 2, 3, 0, '⌫', 'Go'];
+            keys.forEach(key => {
+                const btn = document.createElement('button');
+                btn.classList.add('keypad-btn');
+                btn.textContent = key;
+                btn.dataset.key = key;
+                keypad.appendChild(btn);
+            });
+        }
+        function updateDial(dialEl, valueEl, value) {
+            dialEl.style.setProperty('--value', value);
+            valueEl.textContent = value;
+        }
+        function populateResultsGrid() {
+            resultsGrid.innerHTML = '';
+            for (let i = 1; i <= 12; i++) {
+                for (let j = 1; j <= 12; j++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('result-cell');
+                    const result = resultsLog.find(r => r.question.a === i && r.question.b === j);
+                    if(result) {
+                        if (result.isCorrect) {
+                            cell.classList.add('correct');
+                            cell.textContent = result.correctAnswer;
+                        } else {
+                            cell.classList.add('incorrect');
+                            cell.innerHTML = `${result.userAnswer ?? '—'} <span>(${result.correctAnswer})</span>`;
+                        }
+                    } else {
+                        // Gray out questions not asked in multi-select mode
+                        if (selectedTables.includes(0) || selectedTables.includes(i) || selectedTables.includes(j)) {
+                             cell.textContent = i * j;
+                        } else {
+                            cell.style.color = '#ddd';
+                            cell.textContent = i * j;
+                        }
+                    }
+                    resultsGrid.appendChild(cell);
+                }
+            }
+        }
+
+        // --- Checksum & Local Storage ---
+        function createChecksum(logEntry) {
+            // Include User Agent for device-specific checksum
+            const dataString = `${logEntry.timestamp}-${logEntry.rank}-${logEntry.challenge}-${logEntry.accuracy}-${SECRET_SALT}-${navigator.userAgent}`;
+            let hash = 0;
+            for (let i = 0; i < dataString.length; i++) {
+                const char = dataString.charCodeAt(i);
+                hash = (hash << 5) - hash + char;
+                hash |= 0; // Convert to 32bit integer
+            }
+            return hash.toString(16);
+        }
+
+        function getVerifiedLog() {
+            let log = [];
+            try {
+                log = JSON.parse(localStorage.getItem('timesTableLog')) || [];
+            } catch (e) { return []; }
+            return log.filter(entry => entry.checksum && createChecksum(entry) === entry.checksum);
+        }
+        
+        function saveLogEntry(entry) {
+            const verifiedLog = getVerifiedLog();
+            verifiedLog.push(entry);
+            try {
+                localStorage.setItem('timesTableLog', JSON.stringify(verifiedLog));
+            } catch (e) { console.error("Could not save to local storage.", e); }
+        }
+
+        function displayLogTable() {
+            logTableContainer.innerHTML = '';
+            const log = getVerifiedLog();
+
+            if (log.length === 0) {
+                logTableContainer.innerHTML = '<p>No test history found. Complete a test to see your log!</p>';
+                return;
+            }
+
+            const table = document.createElement('table');
+            table.className = 'log-table';
+            table.innerHTML = `<thead><tr><th>Date & Time</th><th>Challenge</th><th>Accuracy</th><th>Time (s)</th><th>Speed</th><th>Rank</th></tr></thead><tbody></tbody>`;
+            const tbody = table.querySelector('tbody');
+            const dateFormatOptions = { dateStyle: 'short', timeStyle: 'short' };
+
+            log.reverse().forEach(entry => {
+                const row = tbody.insertRow();
+                const formattedDate = new Date(entry.timestamp).toLocaleString(undefined, dateFormatOptions);
+                row.innerHTML = `<td>${formattedDate}</td><td>${entry.challenge}</td><td>${entry.accuracy}%</td><td>${entry.time}</td><td>${entry.speed}</td><td>${entry.rank}</td>`;
+            });
+            logTableContainer.appendChild(table);
+        }
+
+        function displayBestResults() {
+            bestResultsTableContainer.innerHTML = '';
+            const log = getVerifiedLog();
+            
+            const bestScores = {};
+            log.forEach(entry => {
+                // Ensure combination challenges aren't added to bests
+                if (!entry.challenge.includes(',')) {
+                   if (!bestScores[entry.challenge] || entry.rank > bestScores[entry.challenge].rank) {
+                        bestScores[entry.challenge] = entry;
+                    }
+                }
+            });
+
+            const table = document.createElement('table');
+            table.className = 'log-table';
+            table.innerHTML = `<thead><tr><th>Challenge</th><th>Rank</th><th>Accuracy</th><th>Speed</th><th>Time (s)</th><th>Date</th></tr></thead><tbody></tbody>`;
+            const tbody = table.querySelector('tbody');
+            const challenges = [...Array(12).keys()].map(i => `${i + 1}s`).concat('All');
+            const dateFormatOptions = { dateStyle: 'short', timeStyle: 'short' };
+
+            challenges.forEach(challengeName => {
+                const row = tbody.insertRow();
+                const best = bestScores[challengeName];
+                if (best) {
+                    const formattedDate = new Date(best.timestamp).toLocaleString(undefined, dateFormatOptions);
+                    row.innerHTML = `<td><b>${best.challenge}</b></td><td>${best.rank}</td><td>${best.accuracy}%</td><td>${best.speed}</td><td>${best.time}</td><td>${formattedDate}</td>`;
+                } else {
+                    row.innerHTML = `<td><b>${challengeName}</b></td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>`;
+                }
+            });
+            bestResultsTableContainer.appendChild(table);
+        }
+
+        // --- Start the App ---
+        initialize();
+    </script>
+</body>
+</html>
+
