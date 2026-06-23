@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Give the Dog a Bone</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Scale the whole container to fit both width and height */
+  --zoom: min(1, calc(98vw / 660), calc(96vh / 820));
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #3a7a22;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Fredoka One', cursive;
+}
+
+.game-container {
+  background: #f0d080;
+  border: 6px solid #7a4a10;
+  box-shadow: 8px 8px 0 #2a1a04;
+  padding: 14px;
+  width: 660px;
+  position: relative;
+  zoom: var(--zoom);
+}
+
+/* TITLE */
+.title-bar {
+  background: #7a4a10;
+  color: #f0d080;
+  text-align: center;
+  padding: 10px 8px;
+  font-size: 22px;
+  letter-spacing: 3px;
+  margin-bottom: 10px;
+  text-shadow: 3px 3px 0 #2a1a04;
+  border: 3px solid #2a1a04;
+  cursor: pointer;
+  user-select: none;
+}
+
+.title-bar.cheat {
+  background: #b02020;
+  animation: cheat-pulse 1s infinite;
+}
+
+@keyframes cheat-pulse {
+  0%, 100% { background: #b02020; }
+  50% { background: #e03030; }
+}
+
+/* TARGET */
+.target-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: #c8900a;
+  border: 3px solid #7a4a10;
+  box-shadow: 3px 3px 0 #2a1a04;
+  padding: 14px 12px;
+  margin-bottom: 10px;
+}
+
+.dog-sprite {
+  font-size: 44px;
+  line-height: 1;
+}
+
+.find-label {
+  font-size: 13px;
+  color: #ffe090;
+  letter-spacing: 2px;
+  display: block;
+  text-align: center;
+}
+
+.target-number {
+  font-size: 68px;
+  color: #fff;
+  text-shadow: 4px 4px 0 #2a1a04;
+  line-height: 1;
+  min-width: 100px;
+  text-align: center;
+}
+
+/* HUD */
+.hud {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  background: #d4a030;
+  border: 3px solid #7a4a10;
+  box-shadow: 3px 3px 0 #2a1a04;
+  margin-bottom: 10px;
+}
+
+.hud-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.hud-label {
+  font-size: 12px;
+  color: #7a4a10;
+  letter-spacing: 1px;
+}
+
+.hud-value {
+  font-size: 28px;
+  color: #2a1a04;
+  text-shadow: 1px 1px 0 #c8900a;
+}
+
+#timer-value.warning {
+  color: #c00000;
+  animation: blink 0.4s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.1; }
+}
+
+/* GRID */
+.grid-wrapper {
+  border: 4px solid #7a4a10;
+  box-shadow: 4px 4px 0 #2a1a04;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 2px;
+  background: #7a4a10;
+  padding: 2px;
+}
+
+.cell {
+  background: #c8a050;
+  border: 2px solid #8a5c10;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+  color: #4a2800;
+  user-select: none;
+  transition: background 0.07s;
+  position: relative;
+  overflow: hidden;
+}
+
+.cell .num { display: none; color: #3a1a00; }
+.cell.peek .num { display: block; }
+.cell.revealed .num { display: block; }
+.cheat-on .cell .num { display: block; color: #3a1a00; }
+
+.cell:hover { background: #e8c060; border-color: #e0a020; }
+
+.cell.correct {
+  background: #60dd30 !important;
+  border-color: #30aa00 !important;
+}
+
+.cell.wrong {
+  background: #e03030 !important;
+  border-color: #a00000 !important;
+}
+
+.cheat-on .cell.target-cell {
+  background: #ffff40 !important;
+  border-color: #e0c000 !important;
+}
+
+/* INSTRUCTIONS */
+.instructions {
+  text-align: center;
+  font-size: 11px;
+  color: #7a4a10;
+  margin-top: 7px;
+  letter-spacing: 1px;
+}
+
+/* OVERLAY */
+.overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 10, 0, 0.85);
+  z-index: 10;
+  gap: 14px;
+}
+
+.overlay-emoji { font-size: 60px; }
+
+.overlay-title {
+  font-size: 36px;
+  color: #f0d080;
+  text-shadow: 3px 3px 0 #000;
+  letter-spacing: 2px;
+  text-align: center;
+}
+
+.overlay-score {
+  font-size: 22px;
+  color: #ffe8a0;
+  text-align: center;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  width: 90%;
+  max-width: 420px;
+}
+
+.stat-box {
+  background: rgba(255,255,255,0.08);
+  border: 2px solid rgba(240,208,128,0.3);
+  padding: 10px 6px;
+  text-align: center;
+}
+
+.stat-box .stat-val {
+  font-size: 30px;
+  display: block;
+}
+
+.stat-box .stat-lbl {
+  font-size: 10px;
+  letter-spacing: 1px;
+  display: block;
+  margin-top: 2px;
+}
+
+.stat-box.green .stat-val { color: #80ff50; }
+.stat-box.red   .stat-val { color: #ff6060; }
+.stat-box.gold  .stat-val { color: #ffd060; }
+
+.overlay-sub {
+  font-size: 14px;
+  color: #c8a060;
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+.btn {
+  background: #7a4a10;
+  color: #f0d080;
+  border: 4px solid #f0d080;
+  padding: 12px 28px;
+  font-size: 20px;
+  font-family: 'Fredoka One', cursive;
+  cursor: pointer;
+  box-shadow: 5px 5px 0 #2a1a04;
+  letter-spacing: 2px;
+}
+
+.btn:hover {
+  background: #a06020;
+  transform: translate(-2px, -2px);
+  box-shadow: 7px 7px 0 #2a1a04;
+}
+
+.btn:active {
+  transform: translate(3px, 3px);
+  box-shadow: 2px 2px 0 #2a1a04;
+}
+
+/* start screen */
+.start-screen {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 10, 0, 0.88);
+  z-index: 10;
+  gap: 16px;
+}
+
+.start-screen h2 {
+  font-size: 30px;
+  color: #f0d080;
+  text-shadow: 3px 3px 0 #000;
+  text-align: center;
+  letter-spacing: 2px;
+}
+
+.start-screen p {
+  color: #ffe8a0;
+  font-size: 15px;
+  text-align: center;
+  max-width: 380px;
+  line-height: 1.7;
+}
+</style>
+</head>
+<body>
+
+<div class="game-container" id="game-container">
+
+  <div class="title-bar" id="title-bar">🦴 GIVE THE DOG A BONE 🦴</div>
+
+  <div class="target-area">
+    <div class="dog-sprite">🐕</div>
+    <div>
+      <span class="find-label">FIND THIS NUMBER:</span>
+      <div class="target-number" id="target-number">—</div>
+    </div>
+    <div class="dog-sprite" style="transform:scaleX(-1)">🐕</div>
+  </div>
+
+  <div class="hud">
+    <div class="hud-block">
+      <span class="hud-label">SCORE</span>
+      <span class="hud-value" id="score-value">0</span>
+    </div>
+    <div class="hud-block">
+      <span class="hud-label">TIME</span>
+      <span class="hud-value" id="timer-value">60</span>
+    </div>
+    <div class="hud-block">
+      <span class="hud-label">BEST</span>
+      <span class="hud-value" id="best-value">0</span>
+    </div>
+  </div>
+
+  <div class="grid-wrapper">
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <div class="instructions" id="instructions">
+    Click the blank tile that matches the number shown above! Triple-click the title to toggle cheats.
+  </div>
+
+  <!-- Start screen -->
+  <div class="start-screen" id="start-screen">
+    <div style="font-size:64px">🐕🦴</div>
+    <h2>GIVE THE DOG A BONE</h2>
+    <p>
+      A number appears at the top.<br>
+      Click the matching blank tile as fast as you can!<br>
+      Score as many as possible in <strong style="color:#f0d080">60 seconds</strong>.
+    </p>
+    <button class="btn" onclick="startGame()">START</button>
+  </div>
+
+  <!-- Game over overlay -->
+  <div class="overlay" id="overlay" style="display:none">
+    <div class="overlay-emoji">🏆</div>
+    <div class="overlay-title">TIME'S UP!</div>
+    <div class="overlay-score" id="overlay-score"></div>
+    <div class="stats-grid" id="stats-grid"></div>
+    <div class="overlay-sub" id="overlay-sub"></div>
+    <button class="btn" onclick="startGame()">PLAY AGAIN</button>
+  </div>
+
+</div>
+
+<script>
+const TOTAL = 100;
+const TIME_LIMIT = 60;
+
+let score = 0;
+let best = 0;
+let wrongClicks = 0;
+let timeLeft = TIME_LIMIT;
+let targetNumber = null;
+let timerInterval = null;
+let autoInterval = null;
+let gameActive = false;
+let cheatMode = false;
+
+// Triple-click detection on title
+let titleClicks = 0;
+let titleClickTimer = null;
+
+document.getElementById('title-bar').addEventListener('click', () => {
+  titleClicks++;
+  clearTimeout(titleClickTimer);
+  titleClickTimer = setTimeout(() => { titleClicks = 0; }, 500);
+  if (titleClicks >= 3) {
+    titleClicks = 0;
+    toggleCheat();
+  }
+});
+
+function toggleCheat() {
+  cheatMode = !cheatMode;
+  const grid = document.getElementById('grid');
+  const title = document.getElementById('title-bar');
+  if (cheatMode) {
+    grid.classList.add('cheat-on');
+    title.classList.add('cheat');
+    title.textContent = '🔓 CHEAT MODE — AUTO PLAYING 🔓';
+    startAutoPlay();
+  } else {
+    grid.classList.remove('cheat-on');
+    title.classList.remove('cheat');
+    title.textContent = '🦴 GIVE THE DOG A BONE 🦴';
+    stopAutoPlay();
+  }
+  highlightTarget();
+}
+
+function startAutoPlay() {
+  clearInterval(autoInterval);
+  autoInterval = setInterval(() => {
+    if (!gameActive || !cheatMode || targetNumber === null) return;
+    const cells = document.querySelectorAll('.cell');
+    const target = cells[targetNumber - 1];
+    if (target) clickCell(target, targetNumber);
+  }, 150);
+}
+
+function stopAutoPlay() {
+  clearInterval(autoInterval);
+  autoInterval = null;
+}
+
+function buildGrid() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  for (let i = 0; i < TOTAL; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    cell.dataset.num = i + 1;
+    const numSpan = document.createElement('span');
+    numSpan.className = 'num';
+    numSpan.textContent = i + 1;
+    cell.appendChild(numSpan);
+    cell.addEventListener('click', () => clickCell(cell, i + 1));
+    grid.appendChild(cell);
+  }
+}
+
+function startGame() {
+  score = 0;
+  wrongClicks = 0;
+  timeLeft = TIME_LIMIT;
+  gameActive = true;
+
+  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('overlay').style.display = 'none';
+  document.getElementById('timer-value').className = '';
+
+  buildGrid();
+
+  // re-apply cheat if it was on
+  if (cheatMode) {
+    document.getElementById('grid').classList.add('cheat-on');
+  }
+
+  updateHUD();
+  pickTarget();
+
+  clearInterval(timerInterval);
+  timerInterval = setInterval(tick, 1000);
+
+  if (cheatMode) startAutoPlay();
+}
+
+function pickTarget() {
+  targetNumber = Math.floor(Math.random() * TOTAL) + 1;
+  document.getElementById('target-number').textContent = targetNumber;
+  highlightTarget();
+}
+
+function highlightTarget() {
+  document.querySelectorAll('.cell').forEach(c => c.classList.remove('target-cell'));
+  if (cheatMode && targetNumber) {
+    const cells = document.querySelectorAll('.cell');
+    cells[targetNumber - 1].classList.add('target-cell');
+  }
+}
+
+function clickCell(cell, number) {
+  if (!gameActive) return;
+
+  if (number === targetNumber) {
+    score++;
+    updateHUD();
+    cell.classList.remove('peek');
+    cell.classList.add('revealed', 'correct');
+    setTimeout(() => cell.classList.remove('correct'), 250);
+    pickTarget();
+  } else {
+    wrongClicks++;
+    // show the number briefly then hide
+    cell.classList.add('peek', 'wrong');
+    setTimeout(() => {
+      cell.classList.remove('wrong');
+    }, 250);
+    setTimeout(() => {
+      cell.classList.remove('peek');
+    }, 900);
+  }
+}
+
+function updateHUD() {
+  document.getElementById('score-value').textContent = score;
+  document.getElementById('timer-value').textContent = timeLeft;
+  document.getElementById('best-value').textContent = best;
+}
+
+function tick() {
+  timeLeft--;
+  document.getElementById('timer-value').textContent = timeLeft;
+  if (timeLeft <= 10) {
+    document.getElementById('timer-value').className = 'warning';
+  }
+  if (timeLeft <= 0) endGame();
+}
+
+function endGame() {
+  gameActive = false;
+  clearInterval(timerInterval);
+  targetNumber = null;
+
+  const total = score + wrongClicks;
+  const accuracy = total === 0 ? 0 : Math.round((score / total) * 100);
+  const isNewBest = score > best;
+  if (isNewBest) best = score;
+  stopAutoPlay();
+  updateHUD();
+
+  document.getElementById('overlay-score').textContent = `You found ${score} bone${score !== 1 ? 's' : ''}!`;
+
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-box green">
+      <span class="stat-val">${score}</span>
+      <span class="stat-lbl">✅ CORRECT</span>
+    </div>
+    <div class="stat-box red">
+      <span class="stat-val">${wrongClicks}</span>
+      <span class="stat-lbl">❌ WRONG</span>
+    </div>
+    <div class="stat-box gold">
+      <span class="stat-val">${accuracy}%</span>
+      <span class="stat-lbl">🎯 ACCURACY</span>
+    </div>
+  `;
+
+  let rank = score >= 50 ? '🏆 LEGENDARY!' : score >= 35 ? '⭐ EXCELLENT!' : score >= 20 ? '👍 GOOD JOB!' : score >= 10 ? '🐾 KEEP PRACTISING!' : '🐶 TRY AGAIN!';
+  document.getElementById('overlay-sub').textContent = rank + (isNewBest && best > 0 ? '  •  NEW BEST!' : '');
+  document.getElementById('overlay').style.display = 'flex';
+}
+</script>
+</body>
+</html>
