@@ -4,6 +4,18 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Math Games</title>
+
+  <!-- ── iOS / iPadOS Home Screen Icon ─────────────────────────────────── -->
+  <link rel="apple-touch-icon" href="https://static.vecteezy.com/system/resources/thumbnails/005/683/655/small_2x/math-symbols-concepts-vector.jpg" />
+  <link rel="apple-touch-icon" sizes="120x120" href="https://static.vecteezy.com/system/resources/thumbnails/005/683/655/small_2x/math-symbols-concepts-vector.jpg" />
+  <link rel="apple-touch-icon" sizes="152x152" href="https://static.vecteezy.com/system/resources/thumbnails/005/683/655/small_2x/math-symbols-concepts-vector.jpg" />
+  <link rel="apple-touch-icon" sizes="167x167" href="https://static.vecteezy.com/system/resources/thumbnails/005/683/655/small_2x/math-symbols-concepts-vector.jpg" />
+  <link rel="apple-touch-icon" sizes="180x180" href="https://static.vecteezy.com/system/resources/thumbnails/005/683/655/small_2x/math-symbols-concepts-vector.jpg" />
+  <!-- Also used by Android and general bookmark icons -->
+  <link rel="icon" type="image/jpeg" href="https://static.vecteezy.com/system/resources/thumbnails/005/683/655/small_2x/math-symbols-concepts-vector.jpg" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Math Games" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
   <style>
@@ -354,16 +366,10 @@
 
   <script>
     // ── CONFIG ───────────────────────────────────────────────────────────────
-    // Auto-detect repo from GitHub Pages URL, or hardcode below:
-    // const REPO_OWNER = 'your-username';
-    // const REPO_NAME  = 'your-repo';
+    const EXCLUDED = ['index.html'];
 
-    const EXCLUDED = ['index.html'];   // files to never show as game cards
-
-    // Math-flavoured icons assigned by filename hash for consistency
     const ICONS = ['➕','➖','✖️','➗','π','∑','√','∞','🔢','🎲','📐','🧮','🔭','📊','💡','⚡'];
 
-    // Fun math facts shown on empty-state or as card subtitles when no desc available
     const FACTS = [
       'A prime has no divisors other than 1 and itself.',
       '0! equals 1 by definition.',
@@ -377,7 +383,6 @@
 
     // ── REPO DETECTION ───────────────────────────────────────────────────────
     function detectRepo() {
-      // GitHub Pages URLs: https://owner.github.io/repo/ or custom domain with meta
       const meta = document.querySelector('meta[name="github-repo"]');
       if (meta) {
         const [owner, name] = meta.content.split('/');
@@ -393,7 +398,6 @@
         return { owner, name };
       }
 
-      // Fallback: try to read from window config
       if (typeof REPO_OWNER !== 'undefined' && typeof REPO_NAME !== 'undefined') {
         return { owner: REPO_OWNER, name: REPO_NAME };
       }
@@ -451,7 +455,7 @@
         const title = titleFromFilename(f.name);
         const icon  = iconFor(f.name);
         const url   = baseUrl ? `${baseUrl}/${f.name}` : f.name;
-        const desc  = randomFact(); // placeholder; replace with real descs via front-matter if you want
+        const desc  = randomFact();
 
         return `
           <a class="card" href="${url}">
@@ -481,7 +485,6 @@
       btn.disabled = true;
       btn.querySelector('svg').style.animation = 'spin 0.6s linear infinite';
 
-      // Cache: skip network if loaded <5 min ago (unless forced)
       const CACHE_KEY = 'math_games_cache';
       if (!force) {
         try {
@@ -500,7 +503,6 @@
       const repo = detectRepo();
 
       if (!repo) {
-        // Dev / local mode — scan for href links as fallback
         renderError(`
           Couldn't detect a GitHub repo.<br>
           Add <code>&lt;meta name="github-repo" content="owner/repo"&gt;</code> to the
@@ -531,7 +533,6 @@
         const files = await res.json();
         const now = Date.now();
 
-        // Cache result
         try {
           sessionStorage.setItem(CACHE_KEY, JSON.stringify({ files, baseUrl, repoUrl, ts: now }));
         } catch {}
@@ -549,8 +550,6 @@
 
     // ── INIT ──────────────────────────────────────────────────────────────────
     loadGames();
-
-    // Auto-refresh every 5 minutes while the page is open
     setInterval(() => loadGames(true), 5 * 60 * 1000);
   </script>
 </body>
